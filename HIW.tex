@@ -189,7 +189,7 @@ h3 = \f -> \g -> \a -> (map f) (map g a)
 
 \begin{frame}[fragile]
 
-    \begin{itemize}
+    \begin{itemize}[<+->]
 
         \item[]
             \begin{minted}{haskell}
@@ -200,7 +200,7 @@ h3 f g a = (map f) (map g a)
 
         \item[]
             \begin{minted}{haskell}
-h4 f g a = ((\f -> \l ->
+h5 f g a = ((\f -> \l ->
                case l of
                  []    -> []
                  h : t -> f h : map f t) f) (map g a)
@@ -210,7 +210,7 @@ h4 f g a = ((\f -> \l ->
 
           \item[]
               \begin{minted}{haskell}
-h4 f g a = case (map g a) of
+h6 f g a = case (map g a) of
              []    -> []
              h : t -> f h : map f t
               \end{minted}
@@ -219,12 +219,158 @@ h4 f g a = case (map g a) of
 
           \item[]
               \begin{minted}{haskell}
-h4 f g a = case (case a of
-                   []    -> []
-                   h : t -> g h : map g t) of
-             []    -> []
-             h : t -> f h : map f t
+h7 f g a = case (case a of
+                   []      -> []
+                   h1 : t1 -> g h1 : map g t1) of
+             []      -> []
+             h0 : t0 -> f h0 : map f t0
               \end{minted}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \begin{itemize}[<+->]
+        \item[] Case-of-case transformation:
+            (\cite{Jones98atransformation-based})
+
+        \item[]
+            \begin{minted}{haskell}
+h8 f g a = case a of
+             [] -> case [] of
+                     []      -> []
+                     h0 : t0 -> f h0 : map f t0
+             h1 : t1 -> case (g h1 : map g t1) of
+                          []      -> []
+                          h0 : t0 -> f h0 : map f t0
+            \end{minted}
+
+        \item[] At this point we consider all branches, let's start with first
+            one:
+
+        \item[]
+            \begin{minted}{haskell}
+            case [] of
+              [] -> []
+              h0 : t0 -> f h0 : map f t0
+            \end{minted}
+
+        \item[] Known case reduction evaluates this to it's final form, and we
+            update our expression to:
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \begin{itemize}[<+->]
+        \item[]
+            \begin{minted}{haskell}
+h9 f g a = case a of
+             []      -> []
+             h1 : t1 -> case (g h1 : map g t1) of
+                          []      -> []
+                          h0 : t0 -> f h0 : map f t0
+            \end{minted}
+
+        \item[] Second branch:
+
+        \item[]
+            \begin{minted}{haskell}
+            case (g h1 : map g t1) of
+              []      -> []
+              h0 : t0 -> f h0 : map f t0
+            \end{minted}
+
+        \item[] Since \texttt{h0} and \texttt{t0} are linear in the RHS of
+            the second branch, we can just do substitution, without introducing
+            lets:
+
+        \item[]
+            \begin{minted}{haskell}
+            f (g h1) : map f (map g t1)
+            \end{minted}
+
+        \item[] So we now have:
+
+        \item[]
+            \begin{minted}{haskell}
+h10 f g a = case a of
+              []      -> []
+              h1 : t1 -> f (g h1) : map f (map g t1)
+            \end{minted}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \begin{itemize}[<+->]
+        \item[] As in \texttt{h8}, we again consider alternatives. There's
+            nothing to do in first branch.
+
+        \item[]
+            \begin{minted}{haskell}
+            f (g h1) : map f (map g t1)
+            \end{minted}
+
+        \item[]
+            This term is already in WHFN, but we consider sub-terms.
+
+        \item[]
+            \begin{minted}{haskell}
+            f (g h1)
+            \end{minted}
+
+        \item[] We can't do anything about this, all names are free. We consider
+            the second sub-term.
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \begin{itemize}[<+->]
+
+        \item[]
+            \begin{minted}{haskell}
+            map f (map g t1)
+            \end{minted}
+
+        \item[] This looks a lot like one of the terms we compiled before.
+            Remember \texttt{h3}:
+
+        \item[]
+            \begin{minted}{haskell}
+h3 f g a = map f (map g a)
+            \end{minted}
+
+        \item[] Our current term is just a renaming of \texttt{h3}. We started
+            with \texttt{h3} and came across the same term. If we continue we'll
+            loop.
+
+        \item[] Instead, we generate a call to \texttt{h3}.
+
+        \item[]
+            \begin{minted}{haskell}
+            h3 f g t1
+            \end{minted}
+
+        \item[] Since that \texttt{h11} is optimized version of \texttt{h3}, we
+            replace the call to \texttt{h3} with a call to \texttt{h11}, and we
+            have our final definition:
+
+        \item[]
+            \begin{minted}{haskell}
+h11 f g a = case a of
+              []      -> []
+              h1 : t1 -> f (g h1) : h11 f g t1
+            \end{minted}
 
     \end{itemize}
 
