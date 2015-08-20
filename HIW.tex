@@ -3,6 +3,8 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{tikz}
+\usepackage{amssymb}
+\usepackage{minted}
 
 \setbeamertemplate{itemize items}[square]
 
@@ -55,13 +57,180 @@
         \item High-level idea:
             \setbeamertemplate{itemize items}[circle]
             \begin{itemize}
-                \item blah blah blah
+                \item Evaluate programs in compile-time, while making the most
+                    out of known inputs and definitions.
+                    \setbeamertemplate{itemize items}[square]
+                    \begin{itemize}
+                        \item Definitions of used functions.
+                        \item Statically known arguments of functions.
+                        \item When branching, propagate learned information
+                            through branches and make use of that information
+                            while compiling branches.
+                    \end{itemize}
             \end{itemize}
     \end{itemize}
 
 \end{frame}
 
 \begin{frame}
+
+    \frametitle{Supercompilation: An overview}
+
+    \begin{itemize}
+        \item The paper that describes the idea in English: "The Concept of a
+            Supercompiler" \cite{Turchin86theconcept}.
+        \item High-level idea: (contd)
+            \setbeamertemplate{itemize items}[circle]
+            \begin{itemize}
+                \item Evaluate programs in compile-time, while making the most
+                    out of known inputs and definitions.
+                    \setbeamertemplate{itemize items}[square]
+                    \begin{itemize}[<+->]
+                        \item Most of the time the goal is to generate more
+                            efficient programs. \newline
+                            (but see \cite{Klyuchnikov2010proving} for a
+                            different use of supercompilation)
+
+                        \item Just make sure to preserve semantics :)
+                    \end{itemize}
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Supercompilation: An overview}
+
+    \begin{itemize}[<+->]
+        \item One nice idea here is to base supercompilation algorithm on the
+            language's operational semantics, as done in \cite{SCbyEval}.
+
+        \item This optimizes in the sense that:
+
+            If we have a programs $\mathcal{P}_1$ and $\mathcal{P}_2$, and
+            \newline
+            $\mathcal{P}_1 \Downarrow v$ in $N$ steps and \newline
+            $\mathcal{P}_2 \Downarrow v$ in $M$ steps, \newline
+            we consider $\mathcal{P}_2$ optimized if $M \textless N$.
+
+        \item An approximation. It's very unlikely that all of the rules have
+            same costs.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \frametitle{An example}
+
+    \begin{itemize}[<+->]
+        \item[]
+            \begin{minted}{haskell}
+-- mapOfMap f g = map f . map g
+mapOfMap = \f -> \g -> (.) (map f) (map g)
+            \end{minted}
+
+        \item[]
+            We compile RHS of this definition, and we introduce a new definition
+            at each step. We give it a fresh name, and add arguments for free
+            variables in the expression.
+
+        \item[]
+            When we get stuck, we keep evaluating sub-expressions.
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \frametitle{An example}
+
+    \begin{itemize}[<+->]
+
+        \item[]
+            \begin{minted}{haskell}
+-- mapOfMap f g = map f . map g
+mapOfMap = \f -> \g -> (.) (map f) (map g)
+            \end{minted}
+
+        \item[]
+            Lookup \texttt{(.)}:
+            $\beta$-reduction:
+
+        \item[]
+            \begin{minted}{haskell}
+h1 = \f -> \g ->
+       (\f1 -> \f2 -> \a -> f1 (f2 a))
+       (map f) (map g)
+            \end{minted}
+
+        \item[]
+            $\beta$-reduction:
+
+        \item[]
+            \begin{minted}{haskell}
+h2 = \f -> \g ->
+       (\f2 -> \a -> (map f) (f2 a)) (map g)
+            \end{minted}
+
+        \item[]
+            $\beta$-reduction:
+
+        \item[]
+            \begin{minted}{haskell}
+h3 = \f -> \g -> \a -> (map f) (map g a)
+            \end{minted}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \begin{itemize}
+
+        \item[]
+            \begin{minted}{haskell}
+h3 f g a = (map f) (map g a)
+            \end{minted}
+
+        \item[] Lookup \texttt{map}:
+
+        \item[]
+            \begin{minted}{haskell}
+h4 f g a = ((\f -> \l ->
+               case l of
+                 []    -> []
+                 h : t -> f h : map f t) f) (map g a)
+              \end{minted}
+
+          \item[] $\beta$-reduction (twice):
+
+          \item[]
+              \begin{minted}{haskell}
+h4 f g a = case (map g a) of
+             []    -> []
+             h : t -> f h : map f t
+              \end{minted}
+
+          \item[] Lookup \texttt{map}, beta reduction:
+
+          \item[]
+              \begin{minted}{haskell}
+h4 f g a = case (case a of
+                   []    -> []
+                   h : t -> g h : map g t) of
+             []    -> []
+             h : t -> f h : map f t
+              \end{minted}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[allowframebreaks]
     \frametitle{References}
 
     \bibliographystyle{abbrvnat}
