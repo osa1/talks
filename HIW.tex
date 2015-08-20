@@ -4,6 +4,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{tikz}
 
+\setbeamertemplate{itemize items}[square]
+
 \begin{document}
 \title{Rebooting Supercompilation for Haskell}
 
@@ -28,15 +30,42 @@
 
 \frame{\titlepage}
 
-\frame{\frametitle{Table of contents}\tableofcontents}
+%\frame{\frametitle{Table of contents}\tableofcontents}
 
-\section{Section no.1}
-\frame{\frametitle{Title}
-    Supercompiling Haskell. Yeeeaaaaahhh!!
-}
-\subsection{Subsection}
-\frame{
-    Supercompilation? Sounds familiar...
-}
+\begin{frame}
+    \frametitle{Rebooting Supercompilation for Haskell}
+
+    \begin{itemize}[<+->]
+        \item An overview of supercompilation and problems associated with it.
+        \item Why it's worth rebooting, and why GHC is a great compiler to base
+            this work on.
+        \item My preliminary work, and problems I encountered while working on
+            a GHC plugin.
+        \item What's next? My research goals.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Supercompilation: An overview}
+
+    \begin{itemize}[<+->]
+        \item The paper that describes the idea in English: "The Concept of a
+            Supercompiler" \cite{Turchin86theconcept}.
+        \item High-level idea:
+            \setbeamertemplate{itemize items}[circle]
+            \begin{itemize}
+                \item blah blah blah
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{References}
+
+    \bibliographystyle{abbrvnat}
+    \bibliography{refs}
+\end{frame}
 
 \end{document}
