@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage{amssymb}
 \usepackage{minted}
+\usepackage{natbib}
 
 \setbeamertemplate{itemize items}[square]
 
@@ -14,7 +15,7 @@
 \author[Ömer\,S.\,Ağacan \& Ryan\,R.\,Newton]
 {%
   \texorpdfstring{
-    \begin{columns}%[onlytextwidth]
+    \begin{columns}
       \column{.45\linewidth}
       \centering
       Ömer S. Ağacan\\
@@ -53,7 +54,7 @@
 
     \begin{itemize}[<+->]
         \item The paper that describes the idea in English: "The Concept of a
-            Supercompiler" \cite{Turchin86theconcept}.
+            Supercompiler" \citet{Turchin86theconcept}.
         \item High-level idea:
             \setbeamertemplate{itemize items}[circle]
             \begin{itemize}
@@ -78,7 +79,7 @@
 
     \begin{itemize}
         \item The paper that describes the idea in English: "The Concept of a
-            Supercompiler" \cite{Turchin86theconcept}.
+            Supercompiler" \citet{Turchin86theconcept}.
         \item High-level idea: (contd)
             \setbeamertemplate{itemize items}[circle]
             \begin{itemize}
@@ -88,7 +89,7 @@
                     \begin{itemize}[<+->]
                         \item Most of the time the goal is to generate more
                             efficient programs. \newline
-                            (but see \cite{Klyuchnikov2010proving} for a
+                            (but see \citet{Klyuchnikov2010proving} for a
                             different use of supercompilation)
 
                         \item Just make sure to preserve semantics :)
@@ -104,7 +105,7 @@
 
     \begin{itemize}[<+->]
         \item One nice idea here is to base supercompilation algorithm on the
-            language's operational semantics, as done in \cite{SCbyEval}.
+            language's operational semantics, as done in \citet{SCbyEval}.
 
         \item This optimizes in the sense that:
 
@@ -127,8 +128,7 @@
     \begin{itemize}[<+->]
         \item[]
             \begin{minted}{haskell}
--- mapOfMap f g = map f . map g
-mapOfMap = \f -> \g -> (.) (map f) (map g)
+mapOfMap f g = (.) (map f) (map g)
             \end{minted}
 
         \item[]
@@ -151,8 +151,7 @@ mapOfMap = \f -> \g -> (.) (map f) (map g)
 
         \item[]
             \begin{minted}{haskell}
--- mapOfMap f g = map f . map g
-mapOfMap = \f -> \g -> (.) (map f) (map g)
+mapOfMap f g = (.) (map f) (map g)
             \end{minted}
 
         \item[]
@@ -171,8 +170,7 @@ h1 = \f -> \g ->
 
         \item[]
             \begin{minted}{haskell}
-h2 = \f -> \g ->
-       (\f2 -> \a -> (map f) (f2 a)) (map g)
+h2 f g = (\f2 a -> (map f) (f2 a)) (map g)
             \end{minted}
 
         \item[]
@@ -180,7 +178,7 @@ h2 = \f -> \g ->
 
         \item[]
             \begin{minted}{haskell}
-h3 = \f -> \g -> \a -> (map f) (map g a)
+h3 f g a = (map f) (map g a)
             \end{minted}
 
     \end{itemize}
@@ -234,7 +232,7 @@ h7 f g a = case (case a of
 
     \begin{itemize}[<+->]
         \item[] Case-of-case transformation:
-            (\cite{Jones98atransformation-based})
+            (\citet{Jones98atransformation-based})
 
         \item[]
             \begin{minted}{haskell}
@@ -373,6 +371,160 @@ h11 f g a = case a of
             \end{minted}
 
     \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Short digression}
+
+    \begin{itemize}[<+->]
+
+        \item[] This looked a lot similar to deforestation(\citet{deforestation}).
+        \item[] Indeed, all of the steps we took here are described in the
+            original deforestation paper.
+        \item[]
+            Some of the important differences are:
+            \begin{itemize}[<+->]
+                \item No linearity restriction. (in the linear case they would
+                    do similar things -- see \citet{towardsunifying} for a
+                    comparison)
+                \item We do generalization. (not demonstrated here)
+            \end{itemize}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Operations of a supercompiler - Driving}
+
+    We evaluated the program, and while doing that we were careful
+    with previously evaluated terms: \textcolor{blue}{Driving}.
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \frametitle{Operations of a supercompiler - Splitting}
+
+    \begin{itemize}[<+->]
+
+        \item[]
+            When we're stuck because the expression we do pattern matching on
+            couldn't take any more steps, we evaluated branches:
+
+        \item[]
+            \begin{minted}{haskell}
+            case a of
+              []      -> []
+              h1 : t1 -> f (g h1) : map f (map g t1)
+            \end{minted}
+
+        \item[] When we're stuck because the term is in WHNF, we evaluated
+            subterms:
+
+        \item[]
+            \begin{minted}{haskell}
+            f (g h1) : map f (map g t1)
+            \end{minted}
+
+        \item[]
+            This is called \textcolor{blue}{splitting}.
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \frametitle{Operations of a supercompiler - matching}
+
+    \begin{itemize}[<+->]
+        \item[]
+            We need to "compare" current expression with our history of expressions, to
+            prevent loops, and generate optimized functions.
+
+        \item[]
+            \begin{minted}{haskell}
+h3 f g a = map f (map g a)
+...
+h10 f g a = ... map f (map g t1) ...
+            \end{minted}
+
+        \item[]
+            We also need a way to call optimized function when this happens.
+
+        \item[] \textcolor{blue}{Matching}, returns all the necessary information to
+            replace current expression with a function call to optimized
+            function.
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+    \frametitle{Operations of a supercompiler - termination checking}
+
+    \begin{itemize}[<+->]
+        \item[] Something we haven't demonstrated so far.
+
+        \item[]
+            \begin{minted}{haskell}
+reverse_acc []      acc = acc
+reverse_acc (h : t) acc = reverse_acc t (h : acc)
+            \end{minted}
+
+        \item[]
+            \begin{minted}{haskell}
+h0 lst = reverse_acc (reverse_acc lst []) []
+            \end{minted}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - termination checking}
+    \begin{minted}{haskell}
+h0 lst = reverse_acc (reverse_acc lst []) []
+...
+h5 lst =
+  case lst of
+    []      -> []
+    h1 : t1 ->
+      case (reverse_acc t1 (h1 : [])) of
+        []      -> []
+        h0 : t0 -> reverse_acc t0 (h0 : [])
+...
+h_ lst = ... reverse_acc t1 (h1 : []) ...
+...
+h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
+...
+    \end{minted}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - termination checking}
+    \begin{itemize}[<+->]
+        \item[]
+            \begin{minted}{haskell}
+reverse_acc []      acc = acc
+reverse_acc (h : t) acc = reverse_acc t (h : acc)
+            \end{minted}
+
+        \item[] The growing argument(accumulator) makes this example tricky.
+        \item[] We need a \textcolor{blue}{termination checker} to stop in cases
+            like this.
+        \item[] What to do after stopping like this is another story.\newline
+            (see \citet{callbyneed-sc})
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
 
 \end{frame}
 
