@@ -53,18 +53,24 @@
     \frametitle{Supercompilation: An overview}
 
     \begin{itemize}[<+->]
-        \item The paper that describes the idea in English: "The Concept of a
+        \item
+            The paper that describes the idea in English: "The Concept of a
             Supercompiler" \citet{Turchin86theconcept}.
-        \item High-level idea:
+        \item
+            High-level idea:
             \setbeamertemplate{itemize items}[circle]
             \begin{itemize}
-                \item Evaluate programs in compile-time, while making the most
-                    out of known inputs and definitions.
+                \item
+                    Evaluate programs in compile-time, while making the most out
+                    of known inputs and definitions.
                     \setbeamertemplate{itemize items}[square]
                     \begin{itemize}
-                        \item Definitions of used functions.
-                        \item Statically known arguments of functions.
-                        \item When branching, propagate learned information
+                        \item
+                            Definitions of used functions.
+                        \item
+                            Statically known arguments of functions.
+                        \item
+                            When branching, propagate learned information
                             through branches and make use of that information
                             while compiling branches.
                     \end{itemize}
@@ -78,21 +84,23 @@
     \frametitle{Supercompilation: An overview}
 
     \begin{itemize}
-        \item The paper that describes the idea in English: "The Concept of a
+        \item
+            The paper that describes the idea in English: "The Concept of a
             Supercompiler" \citet{Turchin86theconcept}.
-        \item High-level idea: (contd)
+        \item
+            High-level idea: (contd)
             \setbeamertemplate{itemize items}[circle]
             \begin{itemize}
-                \item Evaluate programs in compile-time, while making the most
-                    out of known inputs and definitions.
+                \item
+                    Evaluate programs in compile-time, while making the most out
+                    of known inputs and definitions.
                     \setbeamertemplate{itemize items}[square]
                     \begin{itemize}[<+->]
-                        \item Most of the time the goal is to generate more
+                        \item
+                            Most of the time the goal is to generate more
                             efficient programs. \newline
                             (but see \citet{Klyuchnikov2010proving} for a
                             different use of supercompilation)
-
-                        \item Just make sure to preserve semantics :)
                     \end{itemize}
             \end{itemize}
     \end{itemize}
@@ -104,10 +112,12 @@
     \frametitle{Supercompilation: An overview}
 
     \begin{itemize}[<+->]
-        \item One nice idea here is to base supercompilation algorithm on the
+        \item
+            One nice idea here is to base supercompilation algorithm on the
             language's operational semantics, as done in \citet{SCbyEval}.
 
-        \item This optimizes in the sense that:
+        \item
+            This optimizes in the sense that:
 
             If we have a programs $\mathcal{P}_1$ and $\mathcal{P}_2$, and
             \newline
@@ -115,8 +125,9 @@
             $\mathcal{P}_2 \Downarrow v$ in $M$ steps, \newline
             we consider $\mathcal{P}_2$ optimized if $M \textless N$.
 
-        \item An approximation. It's very unlikely that all of the rules have
-            same costs.
+        \item
+            An approximation. It's very unlikely that all of the rules have same
+            costs.
     \end{itemize}
 
 \end{frame}
@@ -160,9 +171,8 @@ mapOfMap f g = (.) (map f) (map g)
 
         \item[]
             \begin{minted}{haskell}
-h1 = \f -> \g ->
-       (\f1 -> \f2 -> \a -> f1 (f2 a))
-       (map f) (map g)
+h1 f g = (\f1 -> \f2 -> \a -> f1 (f2 a))
+           (map f) (map g)
             \end{minted}
 
         \item[]
@@ -245,8 +255,8 @@ h8 f g a = case a of
                           h0 : t0 -> f h0 : map f t0
             \end{minted}
 
-        \item[] At this point we consider all branches, let's start with first
-            one:
+        \item[]
+            At this point we consider all branches, let's start with first one:
 
         \item[]
             \begin{minted}{haskell}
@@ -255,7 +265,8 @@ h8 f g a = case a of
               h0 : t0 -> f h0 : map f t0
             \end{minted}
 
-        \item[] Known case reduction evaluates this to it's final form, and we
+        \item[]
+            Known case reduction evaluates this to it's final form, and we
             update our expression to:
 
     \end{itemize}
@@ -283,8 +294,9 @@ h9 f g a = case a of
               h0 : t0 -> f h0 : map f t0
             \end{minted}
 
-        \item[] Since \texttt{h0} and \texttt{t0} are linear in the RHS of
-            the second branch, we can just do substitution, without introducing
+        \item[]
+            Since \texttt{h0} and \texttt{t0} are linear in the RHS of the
+            second branch, we can just do substitution, without introducing
             lets:
 
         \item[]
@@ -308,8 +320,9 @@ h10 f g a = case a of
 \begin{frame}[fragile]
 
     \begin{itemize}[<+->]
-        \item[] As in \texttt{h8}, we again consider alternatives. There's
-            nothing to do in first branch.
+        \item[]
+            As in \texttt{h8}, we again consider alternatives. There's nothing
+            to do in first branch.
 
         \item[]
             \begin{minted}{haskell}
@@ -324,8 +337,9 @@ h10 f g a = case a of
             f (g h1)
             \end{minted}
 
-        \item[] We can't do anything about this, all names are free. We consider
-            the second sub-term.
+        \item[]
+            We can't do anything about this, all names are free. We consider the
+            second sub-term.
 
     \end{itemize}
 
@@ -340,16 +354,18 @@ h10 f g a = case a of
             map f (map g t1)
             \end{minted}
 
-        \item[] This looks a lot like one of the terms we compiled before.
-            Remember \texttt{h3}:
+        \item[]
+            This looks a lot like one of the terms we compiled before.  Remember
+            \texttt{h3}:
 
         \item[]
             \begin{minted}{haskell}
 h3 f g a = map f (map g a)
             \end{minted}
 
-        \item[] Our current term is just a renaming of \texttt{h3}. We started
-            with \texttt{h3} and came across the same term. If we continue we'll
+        \item[]
+            Our current term is just a renaming of \texttt{h3}. We started with
+            \texttt{h3} and came across the same term. If we continue we'll
             loop.
 
         \item[] Instead, we generate a call to \texttt{h3}.
@@ -359,7 +375,8 @@ h3 f g a = map f (map g a)
             h3 f g t1
             \end{minted}
 
-        \item[] Since that \texttt{h11} is optimized version of \texttt{h3}, we
+        \item[]
+            Since that \texttt{h11} is optimized version of \texttt{h3}, we
             replace the call to \texttt{h3} with a call to \texttt{h11}, and we
             have our final definition:
 
@@ -380,14 +397,17 @@ h11 f g a = case a of
 
     \begin{itemize}[<+->]
 
-        \item[] This looked a lot similar to deforestation(\citet{deforestation}).
-        \item[] Indeed, all of the steps we took here are described in the
-            original deforestation paper.
+        \item[]
+            This looked a lot similar to deforestation(\citet{deforestation}).
+        \item[]
+            Indeed, all of the steps we took here are described in the original
+            deforestation paper.
         \item[]
             Some of the important differences are:
             \begin{itemize}[<+->]
-                \item No linearity restriction. (in the linear case they would
-                    do similar things -- see \citet{towardsunifying} for a
+                \item
+                    No linearity restriction. (in the linear case they would do
+                    similar things -- see \citet{towardsunifying} for a
                     comparison)
                 \item We do generalization. (not demonstrated here)
             \end{itemize}
@@ -417,17 +437,17 @@ h11 f g a = case a of
 
         \item[]
             \begin{minted}{haskell}
-            case a of
-              []      -> []
-              h1 : t1 -> f (g h1) : map f (map g t1)
+        case a of
+          []      -> []
+          h1 : t1 -> f (g h1) : map f (map g t1)
             \end{minted}
 
-        \item[] When we're stuck because the term is in WHNF, we evaluated
-            subterms:
+        \item[]
+            When we're stuck because the term is in WHNF, we evaluated subterms:
 
         \item[]
             \begin{minted}{haskell}
-            f (g h1) : map f (map g t1)
+        f (g h1) : map f (map g t1)
             \end{minted}
 
         \item[]
@@ -443,8 +463,8 @@ h11 f g a = case a of
 
     \begin{itemize}[<+->]
         \item[]
-            We need to "compare" current expression with our history of expressions, to
-            prevent loops, and generate optimized functions.
+            We need to "compare" current expression with our history of
+            expressions, to prevent loops, and generate optimized functions.
 
         \item[]
             \begin{minted}{haskell}
@@ -456,7 +476,8 @@ h10 f g a = ... map f (map g t1) ...
         \item[]
             We also need a way to call optimized function when this happens.
 
-        \item[] \textcolor{blue}{Matching}, returns all the necessary information to
+        \item[]
+            \textcolor{blue}{Matching}, returns all the necessary information to
             replace current expression with a function call to optimized
             function.
 
@@ -469,7 +490,8 @@ h10 f g a = ... map f (map g t1) ...
     \frametitle{Operations of a supercompiler - termination checking}
 
     \begin{itemize}[<+->]
-        \item[] Something we haven't demonstrated so far.
+        \item[]
+            Something we haven't demonstrated so far.
 
         \item[]
             \begin{minted}{haskell}
@@ -514,18 +536,242 @@ reverse_acc []      acc = acc
 reverse_acc (h : t) acc = reverse_acc t (h : acc)
             \end{minted}
 
-        \item[] The growing argument(accumulator) makes this example tricky.
-        \item[] We need a \textcolor{blue}{termination checker} to stop in cases
+        \item[]
+            The growing argument(accumulator) makes this example tricky.
+        \item[]
+            We need a \textcolor{blue}{termination checker} to stop in cases
             like this.
-        \item[] What to do after stopping like this is another story.\newline
-            (see \citet{callbyneed-sc})
+        \item[]
+            What to do after stopping like this is another story.\newline (see
+            \citet{callbyneed-sc})
 
     \end{itemize}
 
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - issues}
 
+    \begin{itemize}[<+->]
+        \item[] Each one has tricky problems.
+        \item[] Splitter:
+            \begin{itemize}[<+->]
+                \item
+                    We want to propagate information to sub-terms.
+                \item
+                    Propagate too much: We end up duplicating work.
+                \item
+                    Example: (from \citet{callbyneed-sc})
+                    \begin{minted}{haskell}
+let n = fib 100
+    b = n + 1
+    c = n + 2
+ in (b, c)
+                    \end{minted}
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - issues}
+
+    \begin{itemize}
+        \item[] Each one has tricky problems.
+        \item[] Splitter:
+            \begin{itemize}
+                \item
+                    We want to propagate information to sub-terms.
+                \item
+                    Propagate too little: We miss optimization opportunities.
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - issues}
+
+    \begin{itemize}
+        \item[] Each one has tricky problems.
+        \item[] Splitter:
+            \begin{itemize}
+                \item
+                    We want to propagate information to sub-terms.
+                \item
+                    Propagate too little: We miss optimization opportunities.
+                \item
+                    Example: (from \citet{callbyneed-sc})
+                    \begin{minted}{haskell}
+let map = ...
+    ys = map f zs
+    xs = map g ys
+ in Just xs
+                    \end{minted}
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operations of a supercompiler - issues}
+
+    \begin{itemize}[<+->]
+        \item[] Each one has tricky problems.
+        \item[] Matcher:
+            \begin{itemize}[<+->]
+                \item
+                    Syntactic equality(modulo $\alpha$-renaming) almost never
+                    holds.
+                \item
+                    We may end up sharing work, which is not a good thing in
+                    general(increases residency, see
+                    \citet{commonsubexpression}) (example from
+                    \citet{callbyneed-sc})
+                \item
+                    \begin{minted}{haskell}
+S0 =
+    let a = fib y
+        b = fib y
+     in (a, b)
+
+S1 = let a = fib y in (a, a)
+                    \end{minted}
+
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Operations of a supercompiler - issues}
+
+    \begin{itemize}[<+->]
+        \item
+            "We do not attempt to supercompile the full Nofib suite because the
+            other Nofib benchmarks are considerably more complicated and
+            generally suffer from extremely long supercompilation times."
+        \item
+            \citet{timeandspace} focuses on compilation performance, and
+            reports \textit{$<$3 seconds} for all the small programs from nofib.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Latest work}
+
+    \begin{itemize}[<+->]
+        \item
+            \citet{callbyneed-sc} laid out a great framework, with nicely defined
+            components. (Splitter, matcher, termination checker etc.)
+        \item
+            Problems and current solutions are documented nicely.
+        \item
+            We don't have any solutions that work well on \textit{all} programs.
+        \item
+            We don't have a usable implementation.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{It's worth rebooting!}
+
+    \begin{itemize}[<+->]
+        \item
+            \citet{callbyneed-sc} shows some great potential.
+        \item
+            Up to $-95.1\%$ runtime improvement.
+        \item
+            Up to $-100.0\%$ allocation improvement.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{GHC Plugin API}
+
+    \begin{itemize}[<+->]
+        \item
+            GHC plugin API can help here, we can implement a supercompiler as a
+            plugin, get immediate feedback from users.
+        \item
+            No need to merge anything to GHC(in theory).
+        \item
+            But... GHC API feels like \textit{exposed internals} rather than an
+            \textit{API}.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problems with GHC Plugin API}
+
+    \begin{itemize}[<+->]
+        \item
+            No easy ways to do most basic stuff: Moving terms
+            around(substitutions), known-case reduction, case-of-case, etc.
+            (all done in some parts of Core-to-Core passes, need to reverse
+            engineer)
+        \item
+            No easy way to annotate Core syntax. Duplicating the syntax means
+            duplicating huge amounts of code.
+        \item
+            Working on Core hard: Invariants are encoded as partial functions
+            without any helpful error messages -- if we're lucky, there's a
+            NOTE.
+        \item
+            Some things are not clear. (Types are first-class, but can I use
+            them wherever I want? The definition allows this)
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{A more fundamental problem}
+
+    \begin{itemize}[<+->]
+        \item[]
+            Supercompilation is inherently a whole-program optimization
+            technique. ("-O99")
+        \item[]
+            It can optimize just a single definition, but more definitions mean
+            more optimizations.
+        \item[]
+            GHC only saves definitions of small definitions, or definitions with
+            \texttt{INLINE} or \texttt{INLINABLE}.
+        \item[]
+            Ideally we need all the definitions in a module in it's \texttt{.hi}
+            file.
+        \item[]
+            Idea: Use \texttt{-fexpose-all-unfoldings} all the time, distribute
+            \texttt{base} with this option.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Roadmap}
+
+    \begin{itemize}[<+->]
+        \item
+            Working on implementing the supercompiler described in
+            \citet{callbyneed-sc}.
+        \item
+            (Hopefully) Improving GHC plugin API on the way.
+        \item
+            Collecting benchmark programs - send yours! (with expected
+            optimizations)
+        \item
+            Once we have that, hopefully research will follow.
+            \begin{itemize}[<+->]
+                \item
+                    Focus on specific parts(matcher, splitter etc.).
+                \item
+                    Work on some of the obvious improvements, like parallelizing
+                    the matcher.
+                \item
+                    I'm open for more ideas!
+            \end{itemize}
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]
