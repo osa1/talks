@@ -196,7 +196,7 @@
     \frametitle{How it works? An overview}
 
     \begin{itemize}
-        \item
+        \item[]
             \citet{callbyneed-sc} laid out a great framework for
             supercompiling Haskell:
             \begin{itemize}[<+->]
@@ -384,6 +384,100 @@ h_ lst = ... reverse_acc t1 (h1 : []) ...
 h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 ...
     \end{minted}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Another example, growing arguments}
+
+    \begin{itemize}
+        \item[]
+            What to do after stopping is completely different story.
+
+        \item[]
+            Generalization
+
+        \item[]
+            Rollback
+
+        \item[]
+            Other/new ideas?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problems with supercompilation operations}
+
+    \begin{itemize}[<+->]
+        \item[]
+            Each operation has hard problems to solve.
+
+        \item[]
+            \begin{itemize}[<+->]
+                \item[]
+                    \textcolor{blue}{Splitter:} Propagating too much information
+                    may lead to work duplication. Propagating too little
+                    information may lead to missing optimization opportunities.
+
+                \item[]
+                    \textcolor{blue}{Matcher:} Matching may lead to work
+                    sharing, which may increase memory residency.
+                    (\citet{commonsubexpression})
+
+                \item[]
+                    \textcolor{blue}{Termination checker:} Need to be careful
+                    with growing arguments.
+            \end{itemize}
+
+        \item[]
+            \citet{callbyneed-sc} has some solutions, and documents it
+            nicely.
+
+        \item[]
+            But we still don't have a working implementation.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{"Where's my supercompiler for Haskell?"}
+
+    \begin{itemize}[<+->]
+        \item
+            I'm rebooting the supercompiler!
+
+        \item
+            The goal here is to distribute it as a package, downloadable from
+            Hackage.
+
+        \item
+            Then the research will follow.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problems}
+
+\end{frame}
+
+\begin{frame}
+    \centering
+    \begin{itemize}
+        \itemsep1em
+
+        \item[]
+            \begin{huge}
+                Thanks!
+            \end{huge}
+
+        \item[]
+            Github: osa1/sc-plugin
+
+        \item[]
+            IRC: osa1
+
+        \item[]
+            Email me your slow programs: oagacan@indiana.edu
+
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]
