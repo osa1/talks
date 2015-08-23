@@ -1,3 +1,3 @@
 #!/bin/sh
 
-latexmk HIW.tex -pdf -latexoption=-shell-escape
+latexmk HIW_second_try.tex -pdf -latexoption=-shell-escape
