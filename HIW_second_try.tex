@@ -454,8 +454,74 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 \end{frame}
 
 \begin{frame}
-    \frametitle{Problems}
+    \frametitle{Current status and problems}
 
+    \begin{itemize}
+        \item[]
+            There has been some changes in GHC:
+
+            \begin{itemize}
+                \item
+                    Some changes in the Core theory: Roles.
+                \item
+                    Lots of refactoring.
+            \end{itemize}
+
+        \item[]
+            GHC API related problems:
+
+            \begin{itemize}
+                \item
+                    Some needed internals are not exposed by GHC -- requires
+                    some modifications in GHC.
+                \item
+                    No easy ways to do most basic stuff: Moving terms
+                    around(substitutions), known-case reduction, case-of-case,
+                    etc.  (all done in some parts of Core-to-Core passes, need
+                    to reverse engineer)
+                \item
+                    No easy way to annotate Core syntax. Duplicating the syntax
+                    means duplicating huge amounts of code.
+                \item
+                    Working on Core is hard: Invariants are encoded as partial
+                    functions without any helpful error messages -- if we're
+                    lucky, there's a NOTE.
+                \item
+                    Some things are not clear. (Types are first-class, but can I
+                    use them wherever I want? The Core definition allows this)
+            \end{itemize}
+
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Roadmap}
+
+    \begin{itemize}[<+->]
+        \item[]
+            Have a working implementation of supercompiler described in
+            \citet{callbyneed-sc}.
+        \item[]
+            (Maybe) Improve GHC plugin API on the way.
+        \item[]
+            Collecting benchmark programs - send yours! (with expected
+            optimizations)
+            \newline
+            We can collect something like Nofib, but for supercompilation
+            related problems.
+        \item[]
+            Once we have a working implementation:
+            \begin{itemize}
+                \item
+                    Focus on specific parts(matcher, splitter etc.). Try other
+                    ideas from the literature(e.g. homeomorphic embedding).
+                \item
+                    Work on some of the obvious improvements, like parallelizing
+                    the matcher.
+                \item
+                    I'm open for more ideas!
+            \end{itemize}
+    \end{itemize}
 \end{frame}
 
 \begin{frame}
