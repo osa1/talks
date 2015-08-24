@@ -365,46 +365,6 @@ h7 f g a =
 \end{frame}
 
 \begin{frame}[fragile]
-    \frametitle{Another example, growing arguments}
-    \begin{minted}{haskell}
-reverse_acc []      acc = acc
-reverse_acc (h : t) acc = reverse_acc t (h : acc)
-goal lst = reverse_acc (reverse_acc lst []) []
-
-h0 lst = reverse_acc (reverse_acc lst []) []
-...
-h5 lst = case lst of
-    []      -> []
-    h1 : t1 -> case (reverse_acc t1 (h1 : [])) of
-        []      -> []
-        h0 : t0 -> reverse_acc t0 (h0 : [])
-...
-h_ lst = ... reverse_acc t1 (h1 : []) ...
-...
-h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
-...
-    \end{minted}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Another example, growing arguments}
-
-    \begin{itemize}
-        \item[]
-            What to do after stopping is completely different story.
-
-        \item[]
-            Generalization
-
-        \item[]
-            Rollback
-
-        \item[]
-            Other/new ideas?
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
     \frametitle{Problems with supercompilation operations}
 
     \begin{itemize}[<+->]
@@ -412,28 +372,116 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
             Each operation has hard problems to solve.
 
         \item[]
-            \begin{itemize}[<+->]
+            \textcolor{blue}{Splitter:}
+            (from \citet{callbyneed-sc})
+            \begin{itemize}
                 \item[]
-                    \textcolor{blue}{Splitter:} Propagating too much information
-                    may lead to work duplication. Propagating too little
-                    information may lead to missing optimization opportunities.
+                    Propagating too much information may lead to work
+                    duplication.
+
+                    \begin{minted}{haskell}
+let n = fib 100
+    b = n + 1
+    c = n + 2
+ in (b, c)
+                    \end{minted}
 
                 \item[]
-                    \textcolor{blue}{Matcher:} Matching may lead to work
-                    sharing, which may increase memory residency.
-                    (\citet{commonsubexpression})
-
-                \item[]
-                    \textcolor{blue}{Termination checker:} Need to be careful
-                    with growing arguments.
+                    Propagating too little information may lead to missing
+                    optimization opportunities.
+                    \begin{minted}{haskell}
+let map = . . .
+    ys = map f zs
+    xs = map g ys
+ in Just xs
+                    \end{minted}
             \end{itemize}
 
+        %\item[]
+        %    \citet{callbyneed-sc} has some solutions, and it documents and
+        %    implements it nicely.
+
+        %\item[]
+        %    But we still don't have something that we can use \textit{today.}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Problems with supercompilation operations}
+
+    \begin{itemize}[<+->]
         \item[]
-            \citet{callbyneed-sc} has some solutions, and it documents and
-            implements it nicely.
+            Each operation has hard problems to solve.
 
         \item[]
-            But we still don't have something that we can use \textit{today.}
+            \textcolor{blue}{Matcher:}
+            \begin{itemize}
+                \item[]
+                    May lead to work sharing, which may increase memory
+                    residency. (\citet{commonsubexpression})
+
+                    \begin{minted}{haskell}
+S0 =
+    let a = fib y
+        b = fib y
+     in (a, b)
+
+S1 =
+    let a = fib y
+     in (a, a)
+                    \end{minted}
+
+                \item[]
+                    Or:
+
+                \item[]
+                    \begin{minted}{haskell}
+S0 = sum [1 .. 1000] + prod [1 .. 1000]
+S1 = let l = [1 .. 1000] in sum l + prod l
+                    \end{minted}
+
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Problems with supercompilation operations}
+
+    \begin{itemize}[<+->]
+
+        \item[]
+            Each operation has hard problems to solve.
+
+        \item[]
+            \textcolor{blue}{Termination checker:}
+
+            \begin{itemize}
+
+                \item[]
+                    Some programs just loop.
+
+                    \begin{minted}{haskell}
+loop n = loop (n + 1)
+countFrom n = n : countFrom (n + 1)
+                    \end{minted}
+
+                \item[]
+                    Sometimes detecting loops is not so easy: (growing
+                    arguments)
+
+                    \begin{minted}{haskell}
+reverse_acc []      acc = acc
+reverse_acc (h : t) acc = reverse_acc t (h : acc)
+goal lst = reverse_acc (reverse_acc lst []) []
+...
+h_ lst = ... reverse_acc t1 (h1 : []) ...
+...
+h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
+...
+                    \end{minted}
+
+            \end{itemize}
+
     \end{itemize}
 \end{frame}
 
@@ -495,7 +543,7 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 \end{frame}
 
 \begin{frame}
-    \frametitle{Roadmap}
+    \frametitle{Conclusions}
 
     \begin{itemize}[<+->]
         \item[]
@@ -510,17 +558,28 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
             We can create a benchmark suite like Nofib, but for
             supercompilation-specific problems. (pathological cases, programs
             with lots of intermediate data structures)
-        \item[]
-            Once we have a working implementation:
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    Once we have a working implementation:
+    \begin{itemize}
+        \item
+            Focus on specific parts(matcher, splitter etc.). Try other
+            ideas from the literature(e.g. homeomorphic embedding).
+        \item
+            Work on some of the obvious improvements, like parallelizing
+            the matcher.
+        \item
+            More experimental ideas:
             \begin{itemize}
-                \item
-                    Focus on specific parts(matcher, splitter etc.). Try other
-                    ideas from the literature(e.g. homeomorphic embedding).
-                \item
-                    Work on some of the obvious improvements, like parallelizing
-                    the matcher.
-                \item
-                    I'm open for more ideas!
+                \item[]
+                    Can we formulate it as a search problem and apply
+                    ideas from the literature?
+                \item[]
+                    Are profile-driven decision making possible?
+                \item[]
+                    Are machine learning algorithms applicable?
             \end{itemize}
     \end{itemize}
 \end{frame}
@@ -543,7 +602,6 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 
         \item[]
             Email me your slow programs: oagacan@indiana.edu
-
     \end{itemize}
 \end{frame}
 
