@@ -5,6 +5,7 @@
 \usepackage{amssymb}
 \usepackage{minted}
 \usepackage{natbib}
+\usepackage{pdfpages}
 
 \setbeamertemplate{itemize items}[square]
 
@@ -218,6 +219,11 @@
             \end{itemize}
     \end{itemize}
 \end{frame}
+
+{
+    \setbeamercolor{background canvas}{bg=}
+    \includepdf[pages={1}]{mapOfMap.pdf}
+}
 
 \begin{frame}[fragile]
     \frametitle{How it works? An overview}
