@@ -6,6 +6,8 @@
 \usepackage{minted}
 \usepackage{natbib}
 \usepackage{pdfpages}
+\usepackage{listings}
+\usepackage{stmaryrd}
 
 \setbeamertemplate{itemize items}[square]
 
@@ -52,7 +54,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
 
     \frametitle{Supercompilation: An overview}
 
@@ -68,47 +70,26 @@
                     Evaluate programs in compile-time, while making the most out
                     of known inputs and definitions.
                     \setbeamertemplate{itemize items}[square]
-                    \begin{itemize}
+                    \begin{itemize}[]
                         \item
-                            Definitions of used functions.
-                        \item
-                            Statically known arguments of functions.
-                        \item
-                            When branching, propagate learned information
-                            through branches and make use of that information
-                            while compiling branches. (case expressions)
+                            When evaluating sub-expressions of a case
+                            expression, propagate information about current
+                            branch(shape of the scrutinee).
+                            \begin{lstlisting}[mathescape]
+case v of
+  P $v_1$ .. $v_N$  $\rightarrow$ expr
+                            \end{lstlisting}
+
+                            Evaluate $expr [ P\, v_1\, ..\, v_N \slash v ]$.
                     \end{itemize}
-            \end{itemize}
-    \end{itemize}
-
-\end{frame}
-
-\begin{frame}
-    \frametitle{Supercompilation: An overview}
-
-    \begin{itemize}
-        \item
-            The paper that describes the idea in English: "The Concept of a
-            Supercompiler" \citet{Turchin86theconcept}.
-        \item
-            High-level idea: (contd)
-            \setbeamertemplate{itemize items}[circle]
-            \begin{itemize}
                 \item
-                    Evaluate programs in compile-time, while making the most out
-                    of known inputs and definitions.
-                    \setbeamertemplate{itemize items}[square]
-                    \begin{itemize}[<+->]
-                        \item
-                            Most of the time the goal is to generate more
-                            efficient programs. \newline
-                            (but see \citet{Klyuchnikov2010proving} for a
-                            different use of supercompilation)
-                    \end{itemize}
+                    Most of the time the goal is to generate more efficient
+                    programs. (but see \citet{Klyuchnikov2010proving} for a
+                    different use of supercompilation)
             \end{itemize}
     \end{itemize}
-\end{frame}
 
+\end{frame}
 
 \begin{frame}
     \frametitle{Supercompilation in the context of Haskell}
