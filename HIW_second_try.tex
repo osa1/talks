@@ -229,12 +229,38 @@ let n = fib 100
     c = n + 2
  in (b, c)
                     \end{minted}
+                    \noindent\rule{4cm}{0.4pt}
+                    \bigskip
+                    \begin{minted}{haskell}
+let b =
+      let f = <fib, unrolled a few times>
+       in f + 1
+    c =
+      let f = <fib, unrolled a few times>
+       in f + 2
+ in (b, c)
+                    \end{minted}
+            \end{itemize}
+    \end{itemize}
+\end{frame}
 
+\begin{frame}[fragile]
+    \frametitle{Problems with supercompilation operations}
+
+    \begin{itemize}
+        \item[]
+            Each operation has hard problems to solve.
+
+        \item[]
+            \textcolor{blue}{Splitter:}
+            (from \citet{callbyneed-sc})
+
+            \begin{itemize}
                 \item[]
                     Propagating too little information may lead to missing
                     optimization opportunities.
                     \begin{minted}{haskell}
-let map = . . .
+let map = ...
     ys = map f zs
     xs = map g ys
  in Just xs
@@ -246,14 +272,14 @@ let map = . . .
 \begin{frame}[fragile]
     \frametitle{Problems with supercompilation operations}
 
-    \begin{itemize}[<+->]
+    \begin{itemize}
         \item[]
             Each operation has hard problems to solve.
 
         \item[]
             \textcolor{blue}{Matcher:} Injectivity of substitutions effect
             optimizations.
-            \begin{itemize}
+            \begin{itemize}[<+(1)->]
                 \item[]
                     (from \citet{callbyneed-sc})
 
@@ -289,7 +315,7 @@ h2 = (h0 a b, h1 c)
 \begin{frame}[fragile]
     \frametitle{Problems with supercompilation operations}
 
-    \begin{itemize}[<+->]
+    \begin{itemize}
 
         \item[]
             Each operation has hard problems to solve.
@@ -297,7 +323,7 @@ h2 = (h0 a b, h1 c)
         \item[]
             \textcolor{blue}{Termination checker:}
 
-            \begin{itemize}
+            \begin{itemize}[<+(1)->]
 
                 \item[]
                     Some programs just loop.
