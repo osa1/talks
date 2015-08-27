@@ -342,47 +342,15 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 
         \item
             Then the research will follow.
-    \end{itemize}
-\end{frame}
 
-\begin{frame}
-    \frametitle{Current status and problems}
-
-    \begin{itemize}
-        \item[]
-            There has been some changes in GHC:
-
+        \item
+            Some problems:
             \begin{itemize}
                 \item
                     Some changes in the Core theory: Roles.
                 \item
-                    Lots of refactoring.
+                    Lots of refactoring in the GHC internals and API.
             \end{itemize}
-
-        \item[]
-            GHC API related problems:
-
-            \begin{itemize}
-                \item
-                    Some needed internals are not exposed by GHC -- requires
-                    some modifications in GHC.
-                \item
-                    No easy ways to do most basic stuff: Moving terms
-                    around(substitutions), known-case reduction, case-of-case,
-                    etc.  (all done in some parts of Core-to-Core passes, need
-                    to reverse engineer)
-                \item
-                    No easy way to annotate Core syntax. Duplicating the syntax
-                    means duplicating huge amounts of code.
-                \item
-                    Working on Core is hard: Invariants are encoded as partial
-                    functions without any helpful error messages -- if we're
-                    lucky, there's a NOTE.
-                \item
-                    Some things are not clear. (Types are first-class, but can I
-                    use them wherever I want? The Core definition allows this)
-            \end{itemize}
-
     \end{itemize}
 \end{frame}
 
@@ -393,8 +361,6 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
         \item[]
             Have a working implementation of supercompiler described in
             \citet{callbyneed-sc}.
-        \item[]
-            (Maybe) Improve GHC plugin API on the way.
         \item[]
             Collecting benchmark programs - send yours! (with expected
             optimizations)
@@ -455,7 +421,6 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
     \newline
     Github: osa1/sc-plugin \hspace{0.3cm} IRC: osa1 \hspace{0.3cm} Mail:
     oagacan@indiana.edu
-
 \end{frame}
 
 \begin{frame}[allowframebreaks]
