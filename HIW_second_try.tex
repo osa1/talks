@@ -278,7 +278,7 @@ h1 = (h0 a b, h0 c c)
                     \begin{minted}{haskell}
 h0 x y = case x of True -> not y; False -> y
 
-h1 x = not x
+h1 x = case x of True -> False; False -> False
 
 h2 = (h0 a b, h1 c)
                     \end{minted}
