@@ -251,32 +251,37 @@ let map = . . .
             Each operation has hard problems to solve.
 
         \item[]
-            \textcolor{blue}{Matcher:}
+            \textcolor{blue}{Matcher:} Injectivity of substitutions effect
+            optimizations.
             \begin{itemize}
                 \item[]
-                    May lead to work sharing, which may increase memory
-                    residency. (\citet{commonsubexpression})
+                    (from \citet{callbyneed-sc})
 
                     \begin{minted}{haskell}
-S0 =
-    let a = fib y
-        b = fib y
-     in (a, b)
+xor x y = case x of True -> not y; False -> y
 
-S1 =
-    let a = fib y
-     in (a, a)
+goal = (xor a b, xor c c)
                     \end{minted}
 
                 \item[]
-                    Or:
-
-                \item[]
+                    \centering\noindent\rule{4cm}{0.4pt}
+                    \bigskip
                     \begin{minted}{haskell}
-S0 = sum [1 .. 1000] + prod [1 .. 1000]
-S1 = let l = [1 .. 1000] in sum l + prod l
+h0 x y = case x of True -> not y; False -> y
+
+h1 = (h0 a b, h0 c c)
                     \end{minted}
 
+                \item[]
+                    \centering\noindent\rule{4cm}{0.4pt}
+                    \bigskip
+                    \begin{minted}{haskell}
+h0 x y = case x of True -> not y; False -> y
+
+h1 x = not x
+
+h2 = (h0 a b, h1 c)
+                    \end{minted}
             \end{itemize}
     \end{itemize}
 \end{frame}
