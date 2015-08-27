@@ -350,6 +350,9 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
                     Some changes in the Core theory: Roles.
                 \item
                     Lots of refactoring in the GHC internals and API.
+                \item
+                    Working at Core level is hard. (partial functions,
+                    invariants etc.)
             \end{itemize}
     \end{itemize}
 \end{frame}
@@ -384,8 +387,8 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
             More experimental ideas:
             \begin{itemize}
                 \item[]
-                    Can we formulate it as a search problem and apply
-                    ideas from the literature?
+                    Can we formulate it as a search problem and apply ideas from
+                    the literature?
                 \item[]
                     Is profile-driven decision making possible?
                 \item[]
