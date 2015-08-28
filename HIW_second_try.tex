@@ -183,7 +183,7 @@ case v of
         \item[]
             \citet{callbyneed-sc} laid out a great framework for
             supercompiling Haskell:
-            \begin{itemize}[<+->]
+            \begin{itemize}[<+(1)->]
                 \item
                     \textcolor{blue}{Driving:} Take steps according to operational
                     semantics.  Some additional steps like case-of-case
@@ -373,18 +373,6 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
 
         \item
             Then the research will follow.
-
-        \item
-            Some problems:
-            \begin{itemize}
-                \item
-                    Some changes in the Core theory: Roles.
-                \item
-                    Lots of refactoring in the GHC internals and API.
-                \item
-                    Working at Core level is hard. (partial functions,
-                    invariants etc.)
-            \end{itemize}
     \end{itemize}
 \end{frame}
 
@@ -409,8 +397,8 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
     Once we have a working implementation:
     \begin{itemize}
         \item
-            Focus on specific parts(matcher, splitter etc.). Try other
-            ideas from the literature(e.g. homeomorphic embedding).
+            Focus on specific parts(matcher, splitter etc.). Try other ideas
+            from the literature(e.g. homeomorphic embedding for matching)
         \item
             Work on some of the obvious improvements, like parallelizing
             the matcher.
@@ -424,6 +412,8 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
                     Is profile-driven decision making possible?
                 \item[]
                     Can we make use of existing rewrite rules mechanism?
+                \item[]
+                    Can we make use of free theorems?
             \end{itemize}
     \end{itemize}
 \end{frame}
@@ -432,8 +422,9 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
     Once we have a working implementation:
     \begin{itemize}
         \item
-            Focus on specific parts(matcher, splitter etc.). Try other
-            ideas from the literature(e.g. homeomorphic embedding).
+            Focus on specific parts(matcher, splitter etc.). Try other ideas
+            from the literature(e.g. homeomorphic embedding for matching and
+            termination checking).
         \item
             Work on some of the obvious improvements, like parallelizing
             the matcher.
@@ -441,12 +432,14 @@ h_ lst = ... reverse_acc t2 (h2 : h1 : []) ...
             More experimental ideas:
             \begin{itemize}
                 \item[]
-                    Can we formulate it as a search problem and apply
-                    ideas from the literature?
+                    Can we formulate it as a search problem and apply ideas from
+                    the literature?
                 \item[]
-                    Are profile-driven decision making possible?
+                    Is profile-driven decision making possible?
                 \item[]
-                    Are machine learning algorithms applicable?
+                    Can we make use of existing rewrite rules mechanism?
+                \item[]
+                    Can we make use of free theorems?
             \end{itemize}
     \end{itemize}
 
