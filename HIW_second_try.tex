@@ -60,33 +60,11 @@
 
     \begin{itemize}[<+->]
         \item
-            The paper that describes the idea in English: "The Concept of a
-            Supercompiler" \citet{Turchin86theconcept}.
+            Evaluate programs in compile time.
         \item
-            High-level idea:
-            \setbeamertemplate{itemize items}[circle]
-            \begin{itemize}
-                \item
-                    Evaluate programs in compile-time, while making the most out
-                    of known inputs and definitions.
-                    \setbeamertemplate{itemize items}[square]
-                    \begin{itemize}[]
-                        \item
-                            When evaluating sub-expressions of a case
-                            expression, propagate information about current
-                            branch(shape of the scrutinee).
-                            \begin{lstlisting}[mathescape]
-case v of
-  P $v_1$ .. $v_N$  $\rightarrow$ expr
-                            \end{lstlisting}
-
-                            Evaluate $expr [ P\, v_1\, ..\, v_N \slash v ]$.
-                    \end{itemize}
-                \item
-                    Most of the time the goal is to generate more efficient
-                    programs. (but see \citet{Klyuchnikov2010proving} for a
-                    different use of supercompilation)
-            \end{itemize}
+            Make the most out of known inputs and definitions.
+        \item
+            Evaluate open terms.
     \end{itemize}
 
 \end{frame}
