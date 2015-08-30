@@ -274,7 +274,7 @@ goal = (xor a b, xor c c)
                     \begin{minted}{haskell}
 xor' x y = case x of True -> not y; False -> y
 
-goal' = (h0 a b, h0 c c)
+goal' = (xor' a b, xor' c c)
                     \end{minted}
 
                 \item[]
