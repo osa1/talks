@@ -1,0 +1,739 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{minted}
+\usepackage{natbib}
+\usepackage{pdfpages}
+\usepackage{stmaryrd}
+\usepackage{tikz}
+
+\setbeamertemplate{itemize items}[square]
+
+\begin{document}
+\title{Unboxing sum types in GHC}
+
+\author[Ömer\,S.\,Ağacan \& Ryan\,Scott \& Ryan\,R.\,Newton]
+{%
+  \texorpdfstring{
+    \begin{columns}
+      \column{.33\linewidth}
+      \centering
+      Ömer S. Ağacan\\
+      \href{}{}
+      \column{.33\linewidth}
+      \centering
+      Ryan Scott\\
+      \href{}{}
+      \column{.33\linewidth}
+      \centering
+      Ryan R. Newton\\
+      \href{}{}
+    \end{columns}
+    \begin{columns}
+      \column{.50\linewidth}
+      \centering
+      Johan Tibell\\
+      \href{}{}
+      \column{.50\linewidth}
+      \centering
+      José Manuel Calderón Trilla \\
+      \href{}{}
+    \end{columns}
+  }
+  {Ömer\,S.\,Ağacan \& Ryan\,R.\,Newton}
+}
+
+\date{\today}
+
+\frame{\titlepage}
+
+%\frame{\frametitle{Table of contents}\tableofcontents}
+
+\begin{frame}[fragile]
+    \frametitle{Overview}
+
+    \begin{itemize}
+        \item
+            Lazy evaluation sucks for many reasons \\
+            (more on this later if I have time)
+        \item
+            One of the reasons is that it implies boxing \\
+            (a thunk may be arbitrarily big, sizes are not necessarily the same
+            even if the types are same)
+
+        \item
+            If we guarantee strictness in some cases, we can do some
+            optimizations
+        \item
+            Previously these optimizations were only done on product types, now
+            we do those on sum types
+%         \item
+%
+%                     \begin{minted}{haskell}
+% let n = fib 100
+%     b = n + 1
+%     c = n + 2
+%  in (b, c)
+%                     \end{minted}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Avoiding lazy evaluation woes}
+
+    \begin{itemize}
+        \item
+            GHC developers were aware of the problem, thus developed "demand
+            analysis", "constructed product results analysis", "worker/wrapper
+            transformations" and language extensions like "bang-patterns"
+        \item
+            Haskell users were aware of the problem, and they invented
+            typeclasses like ``deepseq'' and wrote code like ...
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+            \begin{minted}[fontsize=\footnotesize]{haskell}
+-- | Use the method of Ridders to compute a root of a function.
+--
+-- The function must have opposite signs when evaluated at the lower
+-- and upper bounds of the search (i.e. the root must be bracketed).
+ridders tol (lo,hi) f
+    ...
+  where
+    go !a !fa !b !fb !i
+        = ...
+      where
+        !m   = a + dm
+        !fm  = f m
+        !dn  = signum (fb - fa) * dm * fm / sqrt (fm*fm - fa*fb)
+        !n   = m - signum dn * min (abs dn) (abs dm - 0.5 * tol)
+        !fn  = f n
+    !flo = f lo
+    !fhi = f hi
+            \end{minted}
+
+            (Real example, from ``statistics'' package)
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{GHC 8.0 and new language pragmas}
+
+    \begin{itemize}
+        \item -XStrictData
+        \item
+            Before: \\
+            \begin{minted}{haskell}
+data D = D !Int !String
+            \end{minted}
+
+        \item
+            After: \\
+            \begin{minted}{haskell}
+{-# LANGUAGE StrictData #-}
+data D = D Int String
+            \end{minted}
+
+        \item
+            Nothing interesting, just adds bang patterns.
+
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{GHC 8.0 and new language pragmas}
+
+    \begin{itemize}
+        \item -XStrict
+        \item Before: \\
+            \begin{minted}[fontsize=\footnotesize]{haskell}
+go !a !fa !b !fb !i
+    = ...
+  where
+    !m   = a + dm
+    !fm  = f m
+    !dn  = signum (fb - fa) * dm * fm / sqrt (fm*fm - fa*fb)
+    !n   = m - signum dn * min (abs dn) (abs dm - 0.5 * tol)
+    !fn  = f n
+            \end{minted}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{GHC 8.0 and new language pragmas}
+
+    \begin{itemize}
+        \item -XStrict
+        \item After: \\
+            \begin{minted}[fontsize=\footnotesize]{haskell}
+{-# LANGUAGE Strict #-}
+go a fa b fb i
+    = ...
+  where
+    m   = a + dm
+    fm  = f m
+    dn  = signum (fb - fa) * dm * fm / sqrt (fm*fm - fa*fb)
+    n   = m - signum dn * min (abs dn) (abs dm - 0.5 * tol)
+    fn  = f n
+            \end{minted}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{GHC 8.0 and new language pragmas}
+
+    \begin{itemize}
+        \item -XStrict
+        \item
+            One exception: \\
+            \begin{minted}[fontsize=\footnotesize]{haskell}
+let (p, q) = ...
+            \end{minted}
+
+            Becomes \\
+
+            \begin{minted}[fontsize=\footnotesize]{haskell}
+let !(p, q) = ...
+            \end{minted}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Demand analysis}
+
+    \begin{itemize}
+        \item
+            An analysis pass that generates argument usage information of
+            functions. \\
+
+            \[
+                \begin{array}{rcll}
+                    s & ::= & \perp & \textit{-- argument not used} \\
+                      & |   & S & \textit{-- argument used} \\
+                      & |   & S(s_1, s_2, ...) & \textit{-- argument and its fields are used} \\
+                      % & |   & C(s) & \textit{-- called, result is used as specified} \\
+                \end{array}
+            \]
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Demand analysis}
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+data D = D Int Int
+
+showD :: D -> String
+showD (D i1 i2) = "D " ++ show i1 ++ " " ++ show i2
+    \end{minted}
+
+    Compile with \texttt{ghc -ddump-simpl -ddump-to-file -O}. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+showD [InlPrag=INLINE[0]] :: D -> String
+[GblId,
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <S(SS),1*U(1*U(U),1*U(U))>,
+ ...]
+showD = ...
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Demand analysis}
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+data D = D Int Int
+
+showD :: D -> String
+showD D{} = "D"
+    \end{minted}
+
+    Compile with \texttt{ghc -ddump-simpl -ddump-to-file -O}. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+showD :: D -> String
+[GblId,
+ Arity=1,
+ Str=DmdType <S,1*H>,
+ ...]
+showD1 = ...
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Demand analysis}
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+data D = D Int Int
+
+showD :: D -> String
+showD _ = "D"
+    \end{minted}
+
+    Compile with \texttt{ghc -ddump-simpl -ddump-to-file -O}. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+showD :: D -> String
+[GblId,
+ Arity=1,
+ Str=DmdType <L,A>,
+ ...]
+showD = ...
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Demand analysis}
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+map :: (a -> b) -> [a] -> [b]
+map _ []       = []
+map f (x : xs) = f x : map f xs
+    \end{minted}
+
+    Compile with \texttt{ghc -ddump-simpl -ddump-to-file -O}. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+map :: forall a_ane b_anf. (a_ane -> b_anf) -> [a_ane] -> [b_anf]
+[GblId, Arity=2, Caf=NoCafRefs,
+ Str=DmdType <L,C(U)><S,1*U>]
+map = ...
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Constructed product results analysis}
+
+    Demand analysis was about argument passing. This analysis is about returning. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+divMod :: Int -> Int -> (Int, Int)
+divMod x y = (x `div` y, x `mod` y)
+    \end{minted}
+
+Usually you use it like this: \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+f =
+  ...
+  let (d, m) = divMod x y
+  ...
+    \end{minted}
+
+    Here we say \texttt{divMod} has CPR property.
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Constructed product results analysis}
+
+    (from \cite{cpr}) \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+chr :: Int -> Char
+chr i = if i >= 0 && i <= 255 then C# i else error "Bad arg to chr"
+
+g :: Int -> (Int, Int)
+g x = if x < 0 then (1, 1) else g (x - 1)
+    \end{minted}
+
+    Negative example: \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+head :: [a] -> a
+head (x : _) = x
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Worker/wrapper transformation}
+
+    \begin{itemize}
+        \item So far we've seen two analyses but no program transformations.
+        \item Worker/wrapper uses the results to generate functions with
+            specialized calling conventions for efficient argument
+            passing/returning.
+        \item
+            Worker: A function with specialized calling convention.
+        \item
+            Wrapper: A small function that works as ``impedance matcher'', it has
+            the standard calling convention, calls the worker.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Worker/wrapper -- examples}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    fac :: Int -> Int
+    fac 0 = 1 -- CPR!
+    fac n = n * fac (n - 1)
+
+    Main.fac :: Int -> Int
+    [GblId,
+     Arity=1,
+     Caf=NoCafRefs,
+     Str=DmdType <S(S),1*U(1*U)>m,
+     ...]
+    Main.fac = ...
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Worker/wrapper -- examples}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    fac :: Int -> Int
+    fac 0 = 1 -- CPR!
+    fac n = n * fac (n - 1)
+
+    ---
+
+    fac :: Int -> Int
+    fac i =
+        case i of I# i' -> I# (wfac i')
+
+    wfac :: Int# -> Int#
+    wfac i =
+        case i of
+          0# -> 1#
+          _  -> i *# (wfac (i -# 1#))
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Worker/wrapper}
+
+    It's essential that the wrapper is inlined everywhere! \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    data D = D !Int
+
+    f = D (fac 10)
+    \end{minted}
+
+    With \texttt{-O}, \texttt{Int} is inlined. \\
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    f = case fac (I# 10#) of
+          I# ret -> D ret
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    fac :: Int -> Int
+    fac i = case i of I# i' -> I# (wfac i')
+
+    f = case fac (I# 10#) of
+          I# ret -> D ret
+
+    ---> (inline fac)
+
+    f = case (case (I# 10) of
+                I# i' -> I# (wfac i')) of
+          I# ret -> D ret
+
+    ---> (case of known constructor)
+
+    f = case (I# (wfac 10)) of
+          I# ret -> D ret
+
+    ---> (case of known constructor)
+
+    D (wfac 10)
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    divMod :: Int -> Int -> (Int, Int)
+    divMod x y = (x `div` y, x `mod` y)
+
+    ---
+
+    wdivMod :: Int -> Int -> (# Int, Int #)
+    wdivMod x y = (# x `div` y, x `mod` y #)
+
+    divMod :: Int -> Int -> (Int, Int)
+    divMod x y = case wdivMod x y of
+                   (# x', y' #) -> (x, y)
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    divMod :: Int -> Int -> (Int, Int)
+    divMod x y = case wdivMod x y of
+                   (# x', y' #) -> (x, y)
+
+    let (d, m) = divMod x y
+    <expr>
+
+    --> (compile to Core)
+
+    case divMod x y of
+      (d, m) -> <expr>
+
+    --> (inline the wrapper)
+
+    case (case wdivMod x y of
+            (# x', y' #) -> (x', y')) of
+      (d, m) -> <expr>
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    case (case wdivMod x y of
+            (# x', y' #) -> (x', y')) of
+      (d, m) -> <expr>
+
+      --> (case of case, case of known constructor, etc.)
+
+    case wdivMod x y of
+      (# d, m #) -> <expr>
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+        let p@(d, m) = divMod x y
+        ... p ... d ... m ...
+
+        -->
+
+        case wdivMod x y of
+          (# d, m #) ->
+            let p = (d, m) in
+            <expr>
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \frametitle{What about sums?}
+
+    We were able to optimize products because:
+
+    \begin{itemize}
+        \item We could pass products more efficiently, by passing multiple
+            arguments.
+
+        \item We could return products more efficiently by returning unboxed
+            tuples.
+
+        \item How to do the same for sum types?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Unboxed sums -- syntax}
+
+    \[
+        \begin{array}{rcll}
+            sum type & ::= & \texttt{(\#} \; \tau_1 \; | \; \tau_2 \; [ \; | \; \tau_3 ... \; ] \; \texttt{\#)} \\
+            sum expr & ::= & \texttt{(\#} \; e \; | \; \texttt{\#)} \texttt{\textit{-- e.g. Left case of Either}} \\
+                     &  |  & \texttt{(\#} \; | \; e \; \texttt{\#)} \texttt{\textit{-- e.g. Right case of Either}} \\
+                     &  |  & \texttt{(\#} \; e \; | \; | \; \texttt{\#)} \\
+                     &  |  & \texttt{(\#} \; | \; e \; | \; \texttt{\#)} \\
+                     &  |  & \texttt{(\#} \; | \; | \; e \; \texttt{\#)} \\
+                     & ... & \\
+        \end{array}
+    \]
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Unboxed sums -- examples}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+f :: (# Int | Bool | (# String | [Int] #) | (# Float, Float #) #)
+  -> String
+f x =
+  case x of
+    (# i | | | #) ->
+        "first alternative (i is Int)"
+    (# | b | | #) ->
+        "second alternative (b is Bool)"
+    (# | | (# s | #) | #) ->
+        "third alternative, s is String"
+    (# | | (# | is #) | #) ->
+        "third alternative, is is [Int]"
+    (# | | | (# f1, f2 #) #) ->
+        "fourth alternative, f1 and f2 are Floats"
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Unboxed sums -- memory layout}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    (# Int | String #)
+    -- tag + pointer
+
+    (# Int# | String #)
+    -- tag + Int# + pointer
+
+    (# Int# | Float# #)
+    -- tag + Int# + Float#
+
+    (# Int | (# Bool, String #) #)
+    -- tag + pointer + pointer
+
+    (# (# Int, Float #) | (# Bool, String #) #)
+    -- tag + pointer + pointer
+    \end{minted}
+
+    We can arbitrarily nest tuples and sums, no problem.
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    data A = A1 Int | A2 String | A3 Bool | A4 Float
+
+    data D = D {-# UNPACK #-} !Bool
+                    -- ^ now works, compiled to just a Int# (tag)
+               {-# UNPACK #-} !(Either String Int)
+                    -- ^ (# String | Int #)
+               {-# UNPACK #-} !(A Int String Bool Float)
+                    -- ^ (# Int | String | Bool | Float #)
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Worker/wrapper is essential}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    data D = D {-# UNPACK #-} !Bool
+
+    andD :: D -> D -> D
+    andD (D b1) (D b2) = D (b1 && b2)
+
+    --- (compile to Core)
+
+    andD :: D -> D -> D
+    andD (D b1) (D b2) =
+        D (case (&& (case b1 of
+                       1# -> True -- allocations!
+                       2# -> False)
+                    (case b2 of
+                       1# -> True
+                       2# -> False)) of
+             True  -> 1#
+             False -> 2#)
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Worker/wrapper is essential}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    data D = D {-# UNPACK #-} !Bool
+
+    andD :: D -> D -> D
+    andD (D b1) (D b2) = D (b1 && b2)
+
+    --- (compile to Core)
+
+    andD :: D -> D -> D
+    andD (D b1) (D b2) =
+      D (wand' b1 b2) -- no packing/ unpacking, zero allocations!
+
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Evaluation}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+data Bx = Bx1 Int# | Bx2 Int# | Bx3 Int# | Bx4 Int# | Bx5  Int#
+        | Bx6 Int# | Bx7 Int# | Bx8 Int# | Bx9 Int# | Bx10 Int#
+  deriving (Show)
+
+iter_bx :: Bx -> Int -> Bx
+iter_bx bx       0 = bx
+iter_bx (Bx1  x) i = iter_bx (Bx2  (x +# 1#)) (i - 1)
+iter_bx (Bx2  x) i = iter_bx (Bx3  (x +# 1#)) (i - 1)
+iter_bx (Bx3  x) i = iter_bx (Bx4  (x +# 1#)) (i - 1)
+iter_bx (Bx4  x) i = iter_bx (Bx5  (x +# 1#)) (i - 1)
+iter_bx (Bx5  x) i = iter_bx (Bx6  (x +# 1#)) (i - 1)
+iter_bx (Bx6  x) i = iter_bx (Bx7  (x +# 1#)) (i - 1)
+iter_bx (Bx7  x) i = iter_bx (Bx8  (x +# 1#)) (i - 1)
+iter_bx (Bx8  x) i = iter_bx (Bx9  (x +# 1#)) (i - 1)
+iter_bx (Bx9  x) i = iter_bx (Bx10 (x +# 1#)) (i - 1)
+iter_bx (Bx10 x) i = iter_bx (Bx1  (x +# 1#)) (i - 1)
+
+main :: IO ()
+main = putStrLn (show (iter_bx (Bx1 0#) 1000000000))
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Evaluation}
+
+    Total allocation goes down from 14,400,052,272 (14G) to 52,048 (52K).
+    Runtime 2.44s to 1.74s.
+
+
+    \begin{minted}[fontsize=\footnotesize]{text}
+    _c57R:
+        decq %rdi    # decrement the counter
+        incq %rsi    # increment the other counter
+
+        # GHC updates the tag in two instructions,
+        # the backend is not perfect.
+        movl $3,%eax
+        movq %rax,%r14
+
+        jmp _c57m    -- loop
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Evaluation}
+
+    \begin{minted}[fontsize=\footnotesize]{haskell}
+    safeDiv :: Int -> Int -> Maybe Int
+    safeDiv _ 0 = Nothing
+    safeDiv n d = Just (n `div` d)
+    \end{minted}
+
+    Unboxed variant 12\% faster.
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Evaluation}
+
+    \begin{itemize}
+    \item
+        We're getting worse results in every single program.
+
+    \item
+        Worker/wrapper is esential.
+
+    \item
+        Currently working on the extending the analyses. We believe this will
+        change \texttt{\{-\# EVERYTHING \#-\}}.
+
+    \item
+        Implementation is simple (I'm doing that part) .. no idea about the
+        abstract interpretation part.
+
+    \item
+        It's online! Add \texttt{\{-\# LANGUAGE UnboxedSums \#-\}}.\\
+        Source: \url{https://github.com/osa1/ghc/tree/unboxed-sums-stg} \\
+        Tarball (x86\_64 Linux): \url{http://cs.indiana.edu/~rrnewton/temp/ghc-8.1.20160201\_ubx\_sums\_1.2-x86\_64-unknown-linux.tar.xz}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]
+    \frametitle{References}
+
+    \bibliographystyle{abbrvnat}
+    \bibliography{refs}
+\end{frame}
+
+\end{document}
